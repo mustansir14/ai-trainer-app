@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:flutter/foundation.dart';
 
+import 'pose_painter.dart'; // Make sure to import the custom painter here
+
 class CameraView extends StatefulWidget {
   final List<CameraDescription> cameras;
   const CameraView({Key? key, required this.cameras}) : super(key: key);
@@ -15,6 +17,8 @@ class _CameraViewState extends State<CameraView> {
   CameraController? _cameraController;
   PoseDetector? _poseDetector;
   bool _isDetecting = false;
+  List<Pose> _poses = [];
+  Size? _imageSize;
 
   @override
   void initState() {
@@ -25,7 +29,7 @@ class _CameraViewState extends State<CameraView> {
 
   Future<void> _initializeCamera() async {
     _cameraController = CameraController(
-      widget.cameras[1],
+      widget.cameras[1], // Choose the camera here (front or back)
       ResolutionPreset.high,
     );
 
@@ -44,17 +48,15 @@ class _CameraViewState extends State<CameraView> {
 
   Future<void> _processImage(CameraImage cameraImage) async {
     try {
-      // Convert the CameraImage to InputImage
-      final InputImage inputImage = _convertCameraImage(cameraImage);
+      final inputImage = _convertCameraImage(cameraImage);
+      final poses = await _poseDetector!.processImage(inputImage);
 
-      // Perform pose detection
-      final List<Pose> poses = await _poseDetector!.processImage(inputImage);
-
-      // Process detected poses (for example, printing the pose data)
-      for (Pose pose in poses) {
-        final landmarks = pose.landmarks;
-        print(landmarks);
-      }
+      // Set detected poses and image size to state
+      setState(() {
+        _poses = poses;
+        _imageSize =
+            Size(cameraImage.width.toDouble(), cameraImage.height.toDouble());
+      });
     } catch (e) {
       print('Error processing image: $e');
     } finally {
@@ -63,14 +65,12 @@ class _CameraViewState extends State<CameraView> {
   }
 
   InputImage _convertCameraImage(CameraImage cameraImage) {
-    // Combine the planes of the camera image into a single Uint8List
     final WriteBuffer allBytes = WriteBuffer();
     for (final Plane plane in cameraImage.planes) {
       allBytes.putUint8List(plane.bytes);
     }
     final bytes = allBytes.done().buffer.asUint8List();
 
-    // Create an InputImageData object
     final Size imageSize = Size(
       cameraImage.width.toDouble(),
       cameraImage.height.toDouble(),
@@ -79,7 +79,6 @@ class _CameraViewState extends State<CameraView> {
         _cameraController!.description.sensorOrientation);
     const InputImageFormat inputImageFormat = InputImageFormat.nv21;
 
-    // Create an InputImageData instance
     final inputImageData = InputImageMetadata(
       size: imageSize,
       rotation: imageRotation,
@@ -87,12 +86,10 @@ class _CameraViewState extends State<CameraView> {
       bytesPerRow: cameraImage.planes[0].bytesPerRow,
     );
 
-    final inputImage = InputImage.fromBytes(
+    return InputImage.fromBytes(
       bytes: bytes,
       metadata: inputImageData,
     );
-
-    return inputImage;
   }
 
   InputImageRotation _rotationIntToImageRotation(int rotation) {
@@ -125,7 +122,17 @@ class _CameraViewState extends State<CameraView> {
       appBar: AppBar(
         title: Text('Camera View'),
       ),
-      body: CameraPreview(_cameraController!),
+      body: Stack(
+        fit: StackFit.expand, // Ensure the camera preview fills the screen
+        children: [
+          CameraPreview(_cameraController!),
+          if (_imageSize != null && _poses.isNotEmpty)
+            CustomPaint(
+              painter: PosePainter(_poses, _imageSize!),
+              child: Container(), // Use a container to provide size constraints
+            ),
+        ],
+      ),
     );
   }
 }
