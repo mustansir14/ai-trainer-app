@@ -18,17 +18,12 @@ class PosePainter extends CustomPainter {
     final double scaleX = size.width / imageSize.width;
     final double scaleY = size.height / imageSize.height;
 
-    print(size.width);
-
     for (Pose pose in poses) {
       for (PoseLandmark landmark in pose.landmarks.values) {
         // Get the x, y coordinates and scale them
 
         final double x = (landmark.x * scaleX) + 75;
         final double y = (landmark.y * scaleY) - 200;
-
-        print(
-            'Before scaling (${landmark.x}, ${landmark.y}) after scaling (${x}, ${y})');
 
         // Draw a small circle at each landmark position
         canvas.drawCircle(Offset(x, y), 10, paint);

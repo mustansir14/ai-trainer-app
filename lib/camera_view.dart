@@ -2,6 +2,9 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:math';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 import 'pose_painter.dart'; // Make sure to import the custom painter here
 
@@ -19,6 +22,7 @@ class _CameraViewState extends State<CameraView> {
   bool _isDetecting = false;
   List<Pose> _poses = [];
   Size? _imageSize;
+  String _predictionText = 'No exercise';
 
   @override
   void initState() {
@@ -51,6 +55,70 @@ class _CameraViewState extends State<CameraView> {
       final inputImage = _convertCameraImage(cameraImage);
       final poses = await _poseDetector!.processImage(inputImage);
 
+      if (poses.isNotEmpty) {
+        Pose pose = poses.first;
+
+        // Check if all necessary landmarks are available
+        if (pose.landmarks.containsKey(PoseLandmarkType.leftShoulder) &&
+            pose.landmarks.containsKey(PoseLandmarkType.leftElbow) &&
+            pose.landmarks.containsKey(PoseLandmarkType.leftWrist) &&
+            pose.landmarks.containsKey(PoseLandmarkType.leftHip) &&
+            pose.landmarks.containsKey(PoseLandmarkType.leftKnee) &&
+            pose.landmarks.containsKey(PoseLandmarkType.leftAnkle)) {
+          // Extract landmarks
+          Offset leftShoulder = Offset(
+              pose.landmarks[PoseLandmarkType.leftShoulder]!.x,
+              pose.landmarks[PoseLandmarkType.leftShoulder]!.y);
+          Offset leftElbow = Offset(
+              pose.landmarks[PoseLandmarkType.leftElbow]!.x,
+              pose.landmarks[PoseLandmarkType.leftElbow]!.y);
+          Offset leftWrist = Offset(
+              pose.landmarks[PoseLandmarkType.leftWrist]!.x,
+              pose.landmarks[PoseLandmarkType.leftWrist]!.y);
+          Offset leftHip = Offset(pose.landmarks[PoseLandmarkType.leftHip]!.x,
+              pose.landmarks[PoseLandmarkType.leftHip]!.y);
+          Offset leftKnee = Offset(pose.landmarks[PoseLandmarkType.leftKnee]!.x,
+              pose.landmarks[PoseLandmarkType.leftKnee]!.y);
+          Offset leftAnkle = Offset(
+              pose.landmarks[PoseLandmarkType.leftAnkle]!.x,
+              pose.landmarks[PoseLandmarkType.leftAnkle]!.y);
+
+          // Calculate angles
+          double shoulderAngle =
+              calculateAngle(leftHip, leftShoulder, leftElbow);
+          double elbowAngle =
+              calculateAngle(leftShoulder, leftElbow, leftWrist);
+          double hipAngle = calculateAngle(leftKnee, leftHip, leftShoulder);
+          double kneeAngle = calculateAngle(leftAnkle, leftKnee, leftHip);
+          double ankleAngle = calculateAngle(leftKnee, leftAnkle, leftWrist);
+
+          // Prepare data for API
+          Map<String, dynamic> data = {
+            "shoulder_angle": shoulderAngle,
+            "elbow_angle": elbowAngle,
+            "hip_angle": hipAngle,
+            "knee_angle": kneeAngle,
+            "ankle_angle": ankleAngle,
+            "shoulder_ground_angle": 90.0, // Adjust if needed
+            "elbow_ground_angle": 90.0, // Adjust if needed
+            "hip_ground_angle": 90.0, // Adjust if needed
+            "knee_ground_angle": 90.0, // Adjust if needed
+            "ankle_ground_angle": 90.0, // Adjust if needed
+          };
+
+          // Send data to the API
+          await sendData(data);
+        } else {
+          setState(() {
+            _predictionText = "No exercise";
+          });
+        }
+      } else {
+        setState(() {
+          _predictionText = "No exercise";
+        });
+      }
+
       // Set detected poses and image size to state
       setState(() {
         _poses = poses;
@@ -61,6 +129,23 @@ class _CameraViewState extends State<CameraView> {
       print('Error processing image: $e');
     } finally {
       _isDetecting = false;
+    }
+  }
+
+  Future<void> sendData(Map<String, dynamic> data) async {
+    final response = await http.post(
+      Uri.parse('http://10.0.2.2:8000/predict/'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(data),
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body);
+      setState(() {
+        _predictionText = responseData['prediction'];
+      });
+    } else {
+      print('Failed to send data: ${response.statusCode}');
     }
   }
 
@@ -105,6 +190,18 @@ class _CameraViewState extends State<CameraView> {
     }
   }
 
+  double calculateAngle(Offset a, Offset b, Offset c) {
+    var ab = Offset(b.dx - a.dx, b.dy - a.dy);
+    var bc = Offset(c.dx - b.dx, c.dy - b.dy);
+
+    var dotProduct = ab.dx * bc.dx + ab.dy * bc.dy;
+    var magnitudeAB = sqrt(ab.dx * ab.dx + ab.dy * ab.dy);
+    var magnitudeBC = sqrt(bc.dx * bc.dx + bc.dy * bc.dy);
+
+    var cosTheta = dotProduct / (magnitudeAB * magnitudeBC);
+    return acos(cosTheta) * (180 / pi); // Convert to degrees
+  }
+
   @override
   void dispose() {
     _cameraController?.dispose();
@@ -126,6 +223,21 @@ class _CameraViewState extends State<CameraView> {
         fit: StackFit.expand, // Ensure the camera preview fills the screen
         children: [
           CameraPreview(_cameraController!),
+          Positioned(
+            top: 50, // Adjust vertical position as needed
+            left: 0,
+            right: 0, // This allows the container to stretch across the screen
+            child: Center(
+              child: Container(
+                padding: EdgeInsets.all(8.0),
+                color: Colors.black54,
+                child: Text(
+                  _predictionText,
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                ),
+              ),
+            ),
+          ),
           if (_imageSize != null && _poses.isNotEmpty)
             CustomPaint(
               painter: PosePainter(_poses, _imageSize!),
