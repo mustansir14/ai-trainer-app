@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 
 class PosePainter extends CustomPainter {
   final List<Pose> poses;
@@ -28,26 +28,26 @@ class PosePainter extends CustomPainter {
         // Draw a small circle at each landmark position
         canvas.drawCircle(Offset(x, y), 10, paint);
 
-        // final textStyle = TextStyle(
-        //   color: Colors.blue,
-        //   fontSize: 12,
-        // );
-        // final textPainter = TextPainter(
-        //   textAlign: TextAlign.left,
-        //   textDirection: TextDirection.ltr,
-        // );
+        final textStyle = TextStyle(
+          color: Colors.blue,
+          fontSize: 12,
+        );
+        final textPainter = TextPainter(
+          textAlign: TextAlign.left,
+          textDirection: TextDirection.ltr,
+        );
 
-        // // Create a text span for the label
-        // final textSpan = TextSpan(
-        //   text: landmark.type.toString(),
-        //   style: textStyle,
-        // );
+        // Create a text span for the label
+        final textSpan = TextSpan(
+          text: landmark.type.toString(),
+          style: textStyle,
+        );
 
-        // // Layout the text and paint it on the canvas
-        // textPainter.text = textSpan;
-        // textPainter.layout();
-        // textPainter.paint(
-        //     canvas, Offset(x + 12, y - 6)); // Offset text near the circle
+        // Layout the text and paint it on the canvas
+        textPainter.text = textSpan;
+        textPainter.layout();
+        textPainter.paint(
+            canvas, Offset(x + 12, y - 6)); // Offset text near the circle
       }
     }
   }

@@ -4,7 +4,7 @@ import joblib
 import numpy as np
 
 # Load the model
-model = joblib.load('exercise_classifier.pkl')
+model = joblib.load('model/exercise_classifier.pkl')
 
 app = FastAPI()
 
