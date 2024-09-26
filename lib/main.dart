@@ -10,6 +10,8 @@ void main() {
 }
 
 class AITrainerApp extends StatelessWidget {
+  const AITrainerApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -23,6 +25,8 @@ class AITrainerApp extends StatelessWidget {
 }
 
 class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
   Future<void> _pickVideo(BuildContext context) async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.video,
@@ -45,7 +49,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('AI Trainer'),
+        title: const Text('AI Trainer'),
       ),
       body: Center(
         child: Column(
@@ -61,9 +65,9 @@ class HomeScreen extends StatelessWidget {
                   ),
                 );
               },
-              child: Text('Start Camera'),
+              child: const Text('Start Camera'),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               // onPressed: () {
               //   Navigator.push(
@@ -76,7 +80,7 @@ class HomeScreen extends StatelessWidget {
               onPressed: () {
                 _pickVideo(context);
               },
-              child: Text('Choose Video'),
+              child: const Text('Choose Video'),
             ),
           ],
         ),

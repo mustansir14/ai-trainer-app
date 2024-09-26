@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
-import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
+import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
 import 'dart:io';
 import 'pose_painter.dart';
-import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'exercise_prediction_client.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class VideoView extends StatefulWidget {
   const VideoView({super.key, required this.file});
@@ -79,7 +79,7 @@ class _VideoViewState extends State<VideoView> {
       }
 
       // Add a slight delay to avoid processing every frame (adjust as needed)
-      await Future.delayed(const Duration(milliseconds: 100));
+      // await Future.delayed(const Duration(milliseconds: 100));
     }
   }
 
@@ -100,6 +100,8 @@ class _VideoViewState extends State<VideoView> {
       File frameFile = File(framePath);
       if (!frameFile.existsSync()) return null;
 
+      await saveFileToDownloads(frameFile);
+
       // Load the extracted frame as an InputImage
       final inputImage = InputImage.fromFile(frameFile);
 
@@ -108,6 +110,23 @@ class _VideoViewState extends State<VideoView> {
       print('Error extracting video frame: $e');
       return null;
     }
+  }
+
+  Future<void> saveFileToDownloads(File file) async {
+    // Request storage permission
+    // if (await Permission.storage.request().isGranted) {
+    // Get the Downloads directory
+    Directory? downloadsDir = await getExternalStorageDirectory();
+
+    // Create a new file path
+    String newPath = '$downloadsDir/${file.uri.pathSegments.last}';
+
+    // Write the file to the new path
+    await file.copy(newPath);
+    // } else {
+    //   // Handle the case when permission is not granted
+    //   print('Storage permission not granted');
+    // }
   }
 
   @override

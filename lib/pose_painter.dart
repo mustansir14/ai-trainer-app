@@ -22,13 +22,13 @@ class PosePainter extends CustomPainter {
       for (PoseLandmark landmark in pose.landmarks.values) {
         // Get the x, y coordinates and scale them
 
-        final double x = (landmark.x * scaleX) + 75;
-        final double y = (landmark.y * scaleY) - 200;
+        final double x = (landmark.x * scaleX);
+        final double y = (landmark.y * scaleY);
 
         // Draw a small circle at each landmark position
         canvas.drawCircle(Offset(x, y), 10, paint);
 
-        final textStyle = TextStyle(
+        final textStyle = const TextStyle(
           color: Colors.blue,
           fontSize: 12,
         );

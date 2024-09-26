@@ -8,7 +8,7 @@ import 'exercise_prediction_client.dart';
 
 class CameraView extends StatefulWidget {
   final List<CameraDescription> cameras;
-  const CameraView({Key? key, required this.cameras}) : super(key: key);
+  const CameraView({super.key, required this.cameras});
 
   @override
   _CameraViewState createState() => _CameraViewState();
@@ -127,7 +127,7 @@ class _CameraViewState extends State<CameraView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Camera View'),
+        title: const Text('Camera View'),
       ),
       body: Stack(
         fit: StackFit.expand, // Ensure the camera preview fills the screen
@@ -139,11 +139,11 @@ class _CameraViewState extends State<CameraView> {
             right: 0, // This allows the container to stretch across the screen
             child: Center(
               child: Container(
-                padding: EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(8.0),
                 color: Colors.black54,
                 child: Text(
                   _predictionText,
-                  style: TextStyle(color: Colors.white, fontSize: 20),
+                  style: const TextStyle(color: Colors.white, fontSize: 20),
                 ),
               ),
             ),
