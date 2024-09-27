@@ -4,8 +4,9 @@ import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 class PosePainter extends CustomPainter {
   final List<Pose> poses;
   final Size imageSize;
+  final Offset poseOffset;
 
-  PosePainter(this.poses, this.imageSize);
+  PosePainter(this.poses, this.imageSize, this.poseOffset);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -22,8 +23,8 @@ class PosePainter extends CustomPainter {
       for (PoseLandmark landmark in pose.landmarks.values) {
         // Get the x, y coordinates and scale them
 
-        final double x = (landmark.x * scaleX);
-        final double y = (landmark.y * scaleY);
+        final double x = (landmark.x * scaleX) + poseOffset.dx;
+        final double y = (landmark.y * scaleY) + poseOffset.dy;
 
         // Draw a small circle at each landmark position
         canvas.drawCircle(Offset(x, y), 10, paint);

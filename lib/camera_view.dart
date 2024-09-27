@@ -150,7 +150,7 @@ class _CameraViewState extends State<CameraView> {
           ),
           if (_imageSize != null && _poses.isNotEmpty)
             CustomPaint(
-              painter: PosePainter(_poses, _imageSize!),
+              painter: PosePainter(_poses, _imageSize!, const Offset(75, -200)),
               child: Container(), // Use a container to provide size constraints
             ),
         ],

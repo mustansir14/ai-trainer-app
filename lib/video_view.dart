@@ -64,13 +64,16 @@ class _VideoViewState extends State<VideoView> {
           // Process the frame with Google ML Kit's PoseDetector
           final poses = await _poseDetector!.processImage(currentFrame);
 
+          setState(() {
+            _poses = poses;
+          });
+
           // Send poses to API and get prediction
           final predictionText =
               await ExercisePredictionClient.predictExercise(poses);
 
           // Update the UI with poses and prediction text
           setState(() {
-            _poses = poses;
             _predictionText = predictionText;
           });
         }
@@ -79,7 +82,7 @@ class _VideoViewState extends State<VideoView> {
       }
 
       // Add a slight delay to avoid processing every frame (adjust as needed)
-      // await Future.delayed(const Duration(milliseconds: 100));
+      await Future.delayed(const Duration(milliseconds: 100));
     }
   }
 
@@ -89,18 +92,17 @@ class _VideoViewState extends State<VideoView> {
     try {
       // Get a temporary directory to save the frame image
       final tempDir = await getTemporaryDirectory();
-      final framePath = '${tempDir.path}/frame.jpg';
+      final position = _videoController!.value.position.inSeconds;
+      final framePath = '${tempDir.path}/frame$position.jpg';
 
       // Extract a single frame at the current position using FFmpeg
-      final position = _videoController!.value.position.inSeconds;
+
       await FFmpegKit.execute(
           '-i $videoPath -vf "select=eq(n\\,${position * 30})" -vsync vfr $framePath');
 
       // Check if frame extraction succeeded
       File frameFile = File(framePath);
       if (!frameFile.existsSync()) return null;
-
-      await saveFileToDownloads(frameFile);
 
       // Load the extracted frame as an InputImage
       final inputImage = InputImage.fromFile(frameFile);
@@ -110,23 +112,6 @@ class _VideoViewState extends State<VideoView> {
       print('Error extracting video frame: $e');
       return null;
     }
-  }
-
-  Future<void> saveFileToDownloads(File file) async {
-    // Request storage permission
-    // if (await Permission.storage.request().isGranted) {
-    // Get the Downloads directory
-    Directory? downloadsDir = await getExternalStorageDirectory();
-
-    // Create a new file path
-    String newPath = '$downloadsDir/${file.uri.pathSegments.last}';
-
-    // Write the file to the new path
-    await file.copy(newPath);
-    // } else {
-    //   // Handle the case when permission is not granted
-    //   print('Storage permission not granted');
-    // }
   }
 
   @override
@@ -157,6 +142,7 @@ class _VideoViewState extends State<VideoView> {
                 _poses,
                 Size(_videoController!.value.size.width,
                     _videoController!.value.size.height),
+                const Offset(0, 0),
               ),
               child: Container(),
             ),
