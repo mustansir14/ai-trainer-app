@@ -6,7 +6,6 @@ import 'dart:io';
 import 'pose_painter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'exercise_prediction_client.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class VideoView extends StatefulWidget {
   const VideoView({super.key, required this.file});
